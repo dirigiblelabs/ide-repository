@@ -72,7 +72,7 @@
 				views: ['repository', 'snapshot', 'editor', 'console'],
 				events: {
 					'repository.resource.open': function(msg){
-						Layouts.manager.openEditor(msg.data.path, msg.data.label, msg.data.contentType, "viewer");
+						Layouts.manager.openEditor(msg.data.path, msg.data.label, msg.data.contentType, "repository");
 					},
 					'repository.resource.deleted': function(msg){
 						//TODO: check if deleted file is currently open in editor and close the editor window

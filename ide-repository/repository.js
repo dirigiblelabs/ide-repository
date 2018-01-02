@@ -242,6 +242,12 @@ RepositoryTreeAdapter.prototype.init = function(containerEl, repositoryName){
 	.on('dblclick.jstree', function (evt) {
 		this.dblClickNode(this.jstree.get_node(evt.target))
 	}.bind(this))
+	.on('create_node.jstree', function (e, data) {})
+	.on('rename_node.jstree', function (e, data) {
+		if(data.old !== data.text || !data.node.original._resource){
+			this.renameNode(data.node, data.old, data.text);
+		}
+	}.bind(this))
 	.on('open_node.jstree', function(evt, data) {
 		if (data.node.type !== 'project')
 			data.instance.set_icon(data.node, 'fa fa-folder-open');
@@ -305,6 +311,33 @@ RepositoryTreeAdapter.prototype.deleteNode = function(node){
 				});	
 	}
 }
+RepositoryTreeAdapter.prototype.renameNode = function(node, oldName, newName){
+	var fpath;
+	if(!node.original._resource){
+		var parentNode = this.jstree.get_node(node.parent);
+		var fpath = parentNode.original._resource.path;
+		this.repositorySvc.createResource.apply(this.repositorySvc, [newName, fpath, node.type=='collection'])
+			.then(function(f){
+				node.original._resource = f;
+				node.original._resource.label = node.original._resource.name;
+				this.messageHub.announceResourceCreated(f);
+			}.bind(this))
+			.catch(function(node, err){
+				this.jstree.delete_node(node);
+				this.refresh();
+				throw err;
+			}.bind(this, node));
+	} else {
+		this.repositorySvc.rename.apply(this.repositorySvc, [oldName, newName, node.original._resource.path])
+			.then(function(data){
+				this.messageHub.announceResourceRenamed(node.original._resource, oldName, newName);
+				//this.jstree.reference(node).select_node(node);
+			}.bind(this))
+			.finally(function() {
+				this.refresh();
+			}.bind(this));
+	}
+};
 RepositoryTreeAdapter.prototype.dblClickNode = function(node){
 	var type = node.original.type;
 	if('resource' === type)

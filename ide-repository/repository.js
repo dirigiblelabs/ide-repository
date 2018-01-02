@@ -320,7 +320,7 @@ RepositoryTreeAdapter.prototype.renameNode = function(node, oldName, newName){
 			.then(function(f){
 				node.original._resource = f;
 				node.original._resource.label = node.original._resource.name;
-				this.messageHub.announceResourceCreated(f);
+				this.$messageHub.announceResourceCreated(f);
 			}.bind(this))
 			.catch(function(node, err){
 				this.jstree.delete_node(node);
@@ -330,7 +330,7 @@ RepositoryTreeAdapter.prototype.renameNode = function(node, oldName, newName){
 	} else {
 		this.repositorySvc.rename.apply(this.repositorySvc, [oldName, newName, node.original._resource.path])
 			.then(function(data){
-				this.messageHub.announceResourceRenamed(node.original._resource, oldName, newName);
+				this.$messageHub.announceResourceRenamed(node.original._resource, oldName, newName);
 				//this.jstree.reference(node).select_node(node);
 			}.bind(this))
 			.finally(function() {

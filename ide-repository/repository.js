@@ -181,27 +181,6 @@ RepositoryService.prototype.load = function(repositoryResourcePath){
 				return response.data;
 			});
 }
-RepositoryService.prototype.listRepositoryNames = function(){
-	var url = new UriBuilder().path(this.repositoryServiceUrl.split('/')).build();
-	return this.$http.get(url)
-			.then(function(response){
-				return response.data;
-			});
-}
-RepositoryService.prototype.createRepository = function(repository){
-	var url = new UriBuilder().path(this.repositoryServiceUrl.split('/')).path(repository).build();
-	return this.$http.post(url)
-			.then(function(response){
-				return response.data;
-			});
-}
-RepositoryService.prototype.createProject = function(repository, project){
-	var url = new UriBuilder().path(this.repositoryServiceUrl.split('/')).path(repository).path(project).build();
-	return this.$http.post(url)
-			.then(function(response){
-				return response.data;
-			});
-}
 
 
 /**
@@ -274,30 +253,9 @@ RepositoryTreeAdapter.prototype.init = function(containerEl, repositoryName){
 	.on('delete_node.jstree', function (e, data) {
 		this.deleteNode(data.node)
 	}.bind(this))
-	.on('create_node.jstree', function (e, data) {})
-	.on('rename_node.jstree', function (e, data) {
-		if(data.old !== data.text || !data.node.original._resource){
-			this.renameNode(data.node, data.old, data.text);
-		}
+	.on('jstree.repository.inspect', function (e, data) {
+		this.inspect(data);
 	}.bind(this))
-	.on('move_node.jstree', function (e, data) {
-		var node = data.node;
-		var oldParentNode = data.instance.get_node(data.old_parent);
-		this.moveNode(oldParentNode, node);
-	}.bind(this))
-	.on('copy_node.jstree', function (e, data) {
-		//TODO
-	}.bind(this))
-	.on('jstree.repository.publish', function (e, data) {		
-		this.publish(data);
-	}.bind(this))
-	.on('jstree.repository.export', function (e, data) {		
-		this.exportProject(data);
-	}.bind(this))
-//	.on('jstree.repository.resource.properties', function (e, data) {
-//	 	var url = data.path + '/' + data.name;
-// 		this.openNodeProperties(url);
-// 	}.bind(this))
 	;
 	
 	this.jstree = $.jstree.reference(jstree);	
@@ -347,51 +305,9 @@ RepositoryTreeAdapter.prototype.deleteNode = function(node){
 				});	
 	}
 }
-RepositoryTreeAdapter.prototype.renameNode = function(node, oldName, newName){
-	var fpath;
-	if(!node.original._resource){
-		var parentNode = this.jstree.get_node(node.parent);
-		var fpath = parentNode.original._resource.path;
-		this.repositorySvc.createResource.apply(this.repositorySvc, [newName, fpath, node.type=='collection'])
-			.then(function(f){
-				node.original._resource = f;
-				node.original._resource.label = node.original._resource.name;
-				this.$messageHub.announceResourceCreated(f);
-			}.bind(this))
-			.catch(function(node, err){
-				this.jstree.delete_node(node);
-				this.refresh();
-				throw err;
-			}.bind(this, node));
-	} else {
-		this.repositorySvc.rename.apply(this.repositorySvc, [oldName, newName, node.original._resource.path])
-			.then(function(data){
-				this.$messageHub.announceResourceRenamed(node.original._resource, oldName, newName);
-				//this.jstree.reference(node).select_node(node);
-			}.bind(this))
-			.finally(function() {
-				this.jstree.refresh();
-			}.bind(this));		
-	}
-};
-RepositoryTreeAdapter.prototype.moveNode = function(sourceParentNode, node){
-	//strip the "/{repository}" segment from paths and the resource segment from source path (for consistency) 
-	var sourceParentNode = sourceParentNode;
-	var sourcepath = sourceParentNode.original._resource.path.substring(this.repositoryName.length+1);
-	var tagetParentNode = this.jstree.get_node(node.parent);
-	var targetpath = tagetParentNode.original._resource.path.substring(this.repositoryName.length+1);
-	var self = this;
-	return this.repositorySvc.move(node.text, sourcepath, targetpath, this.repositoryName)
-			.then(function(sourceParentNode, tagetParentNode){
-				self.refresh(sourceParentNode, true);
-				self.refresh(tagetParentNode, true).then(function(){
-					self.$messageHub.announceResourceMoved(targetpath+'/'+node.text, sourcepath, targetpath);
-				});
-			}.bind(this, sourceParentNode, tagetParentNode));
-};
 RepositoryTreeAdapter.prototype.dblClickNode = function(node){
 	var type = node.original.type;
-	if(['collection'].indexOf(type)<0)
+	if('resource' === type)
 		this.$messageHub.announceResourceOpen(node.original._resource);
 }
 RepositoryTreeAdapter.prototype.clickNode = function(node){
@@ -437,20 +353,9 @@ RepositoryTreeAdapter.prototype.refresh = function(node, keepState){
 					this.jstree.refresh();
 			}.bind(this));
 };
-RepositoryTreeAdapter.prototype.openNodeProperties = function(resource){
-	this.$messageHub.announceResourcePropertiesOpen(resource);
-};
-RepositoryTreeAdapter.prototype.publish = function(resource){
-	return this.publishService.publish(resource.path)
-	.then(function(){
-		return this.$messageHub.announcePublish(resource);
-	}.bind(this));
-};
-RepositoryTreeAdapter.prototype.exportProject = function(resource){
-	if (resource.type === 'project') {
-		return this.exportService.exportProject(resource.path);
-	}
-};
+RepositoryTreeAdapter.prototype.inspect = function(resource){
+	this.$messageHub.announceResourceOpen(resource);
+}
 
 angular.module('repository.config', [])
 	.constant('REPOSITORY_SVC_URL','/services/v3/core/repository')
@@ -471,49 +376,28 @@ angular.module('repository', ['repository.config'])
 }])
 .factory('$messageHub', [function(){
 	var messageHub = new FramesMessageHub();	
-	var message = function(evtName, data){
-		messageHub.post({data: data}, 'repository.' + evtName);
+	var send = function(evtName, data, absolute){
+		messageHub.post({data: data}, 'repository.' + evtName);	
 	};
 	var announceResourceSelected = function(resourceDescriptor){
-		this.message('resource.selected', resourceDescriptor);
+		this.send('resource.selected', resourceDescriptor);
 	};
 	var announceResourceCreated = function(resourceDescriptor){
-		this.message('resource.created', resourceDescriptor);
+		this.send('resource.created', resourceDescriptor);
 	};
 	var announceResourceOpen = function(resourceDescriptor){
-		this.message('resource.open', resourceDescriptor);
+		this.send('resource.open', resourceDescriptor);
 	};
 	var announceResourceDeleted = function(resourceDescriptor){
-		this.message('resource.deleted', resourceDescriptor);
+		this.send('resource.deleted', resourceDescriptor);
 	};
-	var announceResourceRenamed = function(resourceDescriptor, oldName, newName){
-		var data = {
-			"resource": resourceDescriptor,
-			"oldName": oldName,
-			"newName": newName
-		};
-		this.message('resource.renamed', data);
-	};	
-	var announceResourceMoved = function(resourceDescriptor, sourcepath, targetpath){
-		var data = {
-			"resource": resourceDescriptor,
-			"sourcepath": sourcepath,
-			"targetpath": targetpath
-		};
-		this.message('resource.moved', data);
-	};
-	var announceResourcePropertiesOpen = function(resourceDescriptor){
-		this.message('resource.properties', resourceDescriptor);
-	};
+	
 	return {
-		message: message,
+		send: send,
 		announceResourceSelected: announceResourceSelected,
 		announceResourceCreated: announceResourceCreated,
 		announceResourceOpen: announceResourceOpen,
-		announceResourceDeleted: announceResourceDeleted,
-		announceResourceRenamed: announceResourceRenamed,
-		announceResourceMoved: announceResourceMoved,
-		announceResourcePropertiesOpen: announceResourcePropertiesOpen
+		announceResourceDeleted: announceResourceDeleted
 	};
 }])
 .factory('$treeConfig', [function(){
@@ -585,8 +469,20 @@ angular.module('repository', ['repository.config'])
 		"contextmenu": {
 			"items" : function(node) {
 				var ctxmenu = $.jstree.defaults.contextmenu.items();
+				delete ctxmenu.ccp;
+				delete ctxmenu.rename;
 				if(this.get_type(node) === "resource") {
 					delete ctxmenu.create;
+					/*Inspect*/
+					ctxmenu.inspect = {
+						"separator_before": true,
+						"label": "Inspect",
+						"action": function(data){
+							var tree = $.jstree.reference(data.reference);
+							var node = tree.get_node(data.reference);
+							tree.element.trigger('jstree.repository.inspect', [node.original._resource]);
+						}.bind(this)
+					}
 				} else {
 					delete ctxmenu.create.action;
 					ctxmenu.create.label = "New";
@@ -621,9 +517,6 @@ angular.module('repository', ['repository.config'])
 				}										
 				ctxmenu.remove.shortcut = 46;
 				ctxmenu.remove.shortcut_label = 'Del';
-				
-				ctxmenu.rename.shortcut = 113;
-				ctxmenu.rename.shortcut_label = 'F2';
 				
 				return ctxmenu;
 			}

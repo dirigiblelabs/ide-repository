@@ -403,7 +403,7 @@ angular.module('repository', ['repository.config'])
 			return config;
 		},
 		response: function(response) {
-			var token = response.headers()['x-csrf-token']
+			var token = response.headers()['x-csrf-token'];
 			if (token) {
 				csrfToken = token;
 			}

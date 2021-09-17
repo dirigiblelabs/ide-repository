@@ -8,14 +8,13 @@
  * Contributors:
  *   SAP - initial API and implementation
  */
-exports.getView = function() {
-	var view = {
-			"id":"repository",
-			"name":"Repository",
-			"factory":"frame",
-			"region":"left-top",
-			"label":"Repository",
-			"link":"../ide-repository/repository.html"
+exports.getView = function () {
+	return {
+		"id": "repository",
+		"name": "Repository",
+		"factory": "frame",
+		"region": "left-top",
+		"label": "Repository",
+		"link": "../ide-repository/repository.html"
 	};
-	return view;
 }

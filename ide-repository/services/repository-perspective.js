@@ -8,12 +8,11 @@
  * Contributors:
  *   SAP - initial API and implementation
  */
-exports.getPerspective = function() {
-	var perspective = {
-			"name":"Repository",
-			"link":"../ide-repository/index.html",
-			"order":"120",
-			"image":"sitemap"
+exports.getPerspective = function () {
+	return {
+		"name": "Repository",
+		"link": "../ide-repository/index.html",
+		"order": "120",
+		"image": "sitemap"
 	};
-	return perspective;
 }

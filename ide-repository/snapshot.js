@@ -104,14 +104,4 @@ angular
 			//        console.info('onCompleteAll');
 		};
 
-		$messageHub.on('workbench.theme.changed', function (msg) {
-			let themeUrl = msg.data;
-
-			$('a[href="/services/v4/core/theme/ide.css"]').remove();
-			$('<link href="/services/v4/core/theme/ide.css" rel="stylesheet" />').appendTo('head');
-
-			$('#theme-stylesheet').remove();
-			$('<link id="theme-stylesheet" href="' + themeUrl + '" rel="stylesheet" />').appendTo('head');
-		}.bind(this));
-
 	}]);

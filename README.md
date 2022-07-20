@@ -1,15 +1,7 @@
-# Repository Plugin for Eclipse Dirigible
+# Repository view for Eclipse Dirigible
 
 [![Eclipse License](http://img.shields.io/badge/license-Eclipse-brightgreen.svg)](LICENSE)
-[![GitHub contributors](https://img.shields.io/github/contributors/dirigiblelabs/ide-repository.svg)](https://github.com/dirigiblelabs/ide-terminal/graphs/contributors)
-
-## Overview
-
-Repository Plugin for the [Eclipse Dirigible](https://github.com/eclipse/dirigible) WebIDE v3.x and above.
-
-Build the [Eclipse Dirigible](https://github.com/eclipse/dirigible), deploy on e.g. Tomcat Web Container and go to location:
-
-> http://localhost:8080/services/v4/web/ide-repository/repository.html
+[![GitHub contributors](https://img.shields.io/github/contributors/dirigiblelabs/ide-workspace.svg)](https://github.com/dirigiblelabs/ide-workspace/graphs/contributors)
 
 ## License
 

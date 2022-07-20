@@ -13,14 +13,12 @@ let repositoryView = angular.module('repository', ['ideUI', 'ideView', 'ideEdito
 repositoryView.controller('RepositoryViewController', [
     '$scope',
     'messageHub',
-    'ViewParameters',
     'Editors',
     'transportApi',
     'repositoryApi',
     function (
         $scope,
         messageHub,
-        ViewParameters,
         Editors,
         transportApi,
         repositoryApi
@@ -102,16 +100,6 @@ repositoryView.controller('RepositoryViewController', [
                 },
             },
         };
-
-        $scope.jstreeWidget.on('select_node.jstree', function (event, data) {
-            if (data.event && data.event.type === 'click' && data.node.type === 'file') {
-                messageHub.announceFileSelected({
-                    name: data.node.text,
-                    path: data.node.data.path,
-                    contentType: data.node.data.contentType,
-                });
-            }
-        });
 
         $scope.jstreeWidget.on('dblclick.jstree', function (event) {
             let node = $scope.jstreeWidget.jstree(true).get_node(event.target);
@@ -371,7 +359,7 @@ repositoryView.controller('RepositoryViewController', [
                 node.data.contentType,
                 editor,
                 {
-                    readOnly: $scope.parameters.perspectiveId !== 'workbench',
+                    readOnly: true,
                     resourceType: "repository",
                 },
             );
@@ -613,5 +601,4 @@ repositoryView.controller('RepositoryViewController', [
 
         // Initialization
         $scope.reloadFileTree($scope.basePath, true);
-        $scope.parameters = ViewParameters.get();
     }]);

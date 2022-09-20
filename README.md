@@ -1,7 +1,7 @@
 # Repository view for Eclipse Dirigible
 
 [![Eclipse License](http://img.shields.io/badge/license-Eclipse-brightgreen.svg)](LICENSE)
-[![GitHub contributors](https://img.shields.io/github/contributors/dirigiblelabs/ide-workspace.svg)](https://github.com/dirigiblelabs/ide-workspace/graphs/contributors)
+[![GitHub contributors](https://img.shields.io/github/contributors/dirigiblelabs/ide-repository.svg)](https://github.com/dirigiblelabs/ide-repository/graphs/contributors)
 
 ## License
 
